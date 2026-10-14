@@ -132,10 +132,10 @@ final class BuilderMetaTest extends TestCase
     public function test_it_forwards_to_an_aggregation_shorthand(): void
     {
         // Act
-        $dsl = User::query()->avg('avg_age', 'age')->toDsl();
+        $dsl = User::query()->stats('stats_age', 'age')->toDsl();
 
         // Assert
-        self::assertEquals(['avg_age' => ['avg' => ['field' => 'age']]], $dsl['aggs']);
+        self::assertEquals(['stats_age' => ['stats' => ['field' => 'age']]], $dsl['aggs']);
     }
 
     public function test_it_throws_for_an_undefined_query_method(): void

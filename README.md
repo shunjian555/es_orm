@@ -280,6 +280,31 @@ $user->toArray();
 $user->toJson();
 ```
 
+### Find-or-create helpers
+
+```php
+// Find by attributes or return an unsaved instance hydrated with the values
+$user = User::query()->firstOrNew(['email' => 'tom@example.com'], ['name' => 'Tom']);
+
+// Find by attributes or create the document (single index request when missing)
+$user = User::query()->firstOrCreate(['email' => 'tom@example.com'], ['name' => 'Tom']);
+
+// Find by attributes and create/update with the given values
+$user = User::query()->updateOrCreate(['email' => 'tom@example.com'], ['age' => 21]);
+```
+
+### Atomic counters
+
+`increment()` / `decrement()` write the change with a single Painless script
+update (`retry_on_conflict` included), so concurrent writers never lose an
+update, and the in-memory attributes stay in sync:
+
+```php
+$user->increment('login_count');
+$user->increment('balance', 25, ['status' => 'vip']); // extra attributes in the same request
+$user->decrement('balance', 10);
+```
+
 ### Batch operations (Bulk API)
 
 All batch helpers use the Elasticsearch **Bulk API** in a single request per
@@ -341,6 +366,26 @@ whereExists(), whereNotExists()
 whereNested(), orWhereNested()
 ```
 
+### Execution helpers
+
+```php
+// Existence and single-record assertions
+User::query()->where('status', 'active')->exists(); // bool
+User::query()->where('email', $email)->sole();      // User, throws when 0 or > 1 match
+
+// Metric shortcuts (a size-0 search with a single value aggregation)
+User::query()->where('status', 'active')->avg('age');    // int|float|null
+User::query()->sum('price');
+User::query()->min('created_at');
+User::query()->max('created_at');
+
+// Delete every document matching the query (_delete_by_query, hard delete)
+User::query()->where('status', 'banned')->deleteByQuery(['refresh' => true]);
+```
+
+`sole()` throws `ModelNotFoundException` when nothing matches and
+`MultipleRecordsFoundException` when more than one document matches.
+
 ## Query DSL
 
 The native Elasticsearch queries are first-class citizens:
@@ -353,7 +398,7 @@ Article::query()
     ->term('status', 'published')
     ->terms('category_id', [1, 2, 3])
     ->range('created_at', ['gte' => 'now-30d'])
-    ->exists('published_at')
+    ->whereExists('published_at')
     ->prefix('slug', 'elastic')
     ->wildcard('title', 'elastic*')
     ->regexp('slug', 'elas.*')

@@ -53,6 +53,14 @@ interface ClientInterface
     public function delete(array $params): array;
 
     /**
+     * Delete every document matching the given query (_delete_by_query).
+     *
+     * @param array<string, mixed> $params
+     * @return array<string, mixed>
+     */
+    public function deleteByQuery(array $params): array;
+
+    /**
      * @param array<string, mixed> $params
      * @return array<string, mixed>
      */

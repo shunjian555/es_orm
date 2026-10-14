@@ -36,7 +36,7 @@ final class BuilderDslQueryTest extends TestCase
             'term' => ['term', ['status', 'active'], ['term' => ['status' => 'active']]],
             'terms' => ['terms', ['status', ['a', 'b']], ['terms' => ['status' => ['a', 'b']]]],
             'range' => ['range', ['age', ['gte' => 18]], ['range' => ['age' => ['gte' => 18]]]],
-            'exists' => ['exists', ['email'], ['exists' => ['field' => 'email']]],
+            'where_exists' => ['whereExists', ['email'], ['exists' => ['field' => 'email']]],
             'prefix' => ['prefix', ['name', 'To'], ['prefix' => ['name' => ['value' => 'To']]]],
             'wildcard' => ['wildcard', ['name', 'T*m'], ['wildcard' => ['name' => ['value' => 'T*m']]]],
             'regexp' => ['regexp', ['name', 'T.*'], ['regexp' => ['name' => ['value' => 'T.*']]]],

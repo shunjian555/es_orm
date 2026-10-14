@@ -117,7 +117,10 @@ interface QueryBuilderInterface
      */
     public function range(string $field, array $ranges): static;
 
-    public function exists(string $field): static;
+    /**
+     * Whether at least one document matches the query.
+     */
+    public function exists(): bool;
 
     /**
      * @param array<string, mixed> $options

@@ -73,6 +73,11 @@ final class ElasticsearchClient implements ClientInterface
         return $this->toArray($this->client->delete($params));
     }
 
+    public function deleteByQuery(array $params): array
+    {
+        return $this->toArray($this->client->deleteByQuery($params));
+    }
+
     public function bulk(array $params): array
     {
         return $this->toArray($this->client->bulk($params));

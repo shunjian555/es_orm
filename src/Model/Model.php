@@ -775,6 +775,30 @@ abstract class Model implements ModelInterface, ArrayAccess
         return $this->save();
     }
 
+    /**
+     * Atomically increment a numeric field via a Painless script update.
+     *
+     * @param string $column The field to increment.
+     * @param int|float $amount The increment step.
+     * @param array<string, mixed> $extra Additional attributes written in the same request.
+     */
+    public function increment(string $column, int|float $amount = 1, array $extra = []): bool
+    {
+        return $this->incrementOrDecrement($column, $amount, $extra, '+');
+    }
+
+    /**
+     * Atomically decrement a numeric field via a Painless script update.
+     *
+     * @param string $column The field to decrement.
+     * @param int|float $amount The decrement step.
+     * @param array<string, mixed> $extra Additional attributes written in the same request.
+     */
+    public function decrement(string $column, int|float $amount = 1, array $extra = []): bool
+    {
+        return $this->incrementOrDecrement($column, $amount, $extra, '-');
+    }
+
     public function delete(): bool
     {
         if ($this->fireModelEvent('deleting') === false) {
@@ -1154,6 +1178,61 @@ abstract class Model implements ModelInterface, ArrayAccess
             'index' => $this->getIndex(),
             'id' => $key,
         ]);
+    }
+
+    /**
+     * Perform the atomic script update behind increment()/decrement() and keep
+     * the in-memory attributes in sync with the stored document.
+     *
+     * @param array<string, mixed> $extra
+     */
+    protected function incrementOrDecrement(string $column, int|float $amount, array $extra, string $operator): bool
+    {
+        if (!$this->exists || $this->getKey() === null) {
+            throw new InvalidQueryException('Cannot increment or decrement a model that does not exist.');
+        }
+
+        if ($this->fireModelEvent('updating') === false) {
+            return false;
+        }
+
+        $source = 'ctx._source[params.column] = (ctx._source[params.column] == null ? 0 : ctx._source[params.column]) + params.amount';
+
+        if ($extra !== []) {
+            $source .= '; for (def entry : params.extra.entrySet()) { ctx._source[entry.getKey()] = entry.getValue() }';
+        }
+
+        $params = [
+            'column' => $column,
+            'amount' => $operator === '-' ? -1 * $amount : $amount,
+        ];
+
+        if ($extra !== []) {
+            $params['extra'] = $extra;
+        }
+
+        $this->connection()->request('update', [
+            'index' => $this->getIndex(),
+            'id' => $this->getKey(),
+            'body' => [
+                'script' => ['source' => $source, 'params' => $params],
+                'retry_on_conflict' => 3,
+            ],
+        ]);
+
+        $current = $this->getAttribute($column);
+        $current = is_int($current) || is_float($current) ? $current : 0;
+
+        $this->setAttribute($column, $operator === '-' ? $current - $amount : $current + $amount);
+
+        foreach ($extra as $key => $value) {
+            $this->setAttribute((string) $key, $value);
+        }
+
+        $this->syncOriginal();
+        $this->fireModelEvent('updated');
+
+        return true;
     }
 
     /**

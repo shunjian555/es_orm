@@ -37,6 +37,9 @@ use EsOrm\DSL\Query\TermQuery;
 use EsOrm\DSL\Query\TermsQuery;
 use EsOrm\DSL\Query\WildcardQuery;
 use EsOrm\Exceptions\InvalidQueryException;
+use EsOrm\Exceptions\ModelNotFoundException;
+use EsOrm\Exceptions\MultipleRecordsFoundException;
+use EsOrm\Exceptions\SearchException;
 use EsOrm\Model\Model;
 use EsOrm\Model\ModelCollection;
 use EsOrm\Model\SearchResult;
@@ -323,11 +326,6 @@ final class Builder implements QueryBuilderInterface
     public function range(string $field, array $ranges): static
     {
         return $this->push(new RangeQuery($field, $ranges));
-    }
-
-    public function exists(string $field): static
-    {
-        return $this->push(new ExistsQuery($field));
     }
 
     public function prefix(string $field, string $value, array $options = []): static
@@ -910,6 +908,92 @@ final class Builder implements QueryBuilderInterface
         return $first instanceof Model ? $first : null;
     }
 
+    /**
+     * Return the first matching model, or a new (unsaved) instance hydrated
+     * with the given values when nothing matches.
+     *
+     * @param array<string, mixed> $attributes Equality filters applied to the query.
+     * @param array<string, mixed> $values Attributes used for the new instance.
+     */
+    public function firstOrNew(array $attributes = [], array $values = []): Model
+    {
+        $instance = (clone $this)->where($attributes)->first();
+
+        return $instance ?? $this->model->newInstance(array_merge($attributes, $values));
+    }
+
+    /**
+     * Return the first matching model, or create it when nothing matches.
+     *
+     * @param array<string, mixed> $attributes Equality filters applied to the query.
+     * @param array<string, mixed> $values Extra attributes merged into the created document.
+     */
+    public function firstOrCreate(array $attributes = [], array $values = []): Model
+    {
+        $instance = (clone $this)->where($attributes)->first();
+
+        if ($instance !== null) {
+            return $instance;
+        }
+
+        $instance = $this->model->newInstance();
+        $instance->fill($attributes);
+
+        if ($values !== []) {
+            $instance->fill($values);
+        }
+
+        $instance->save();
+
+        return $instance;
+    }
+
+    /**
+     * Return the first matching model, or create/update it with the given values.
+     *
+     * @param array<string, mixed> $attributes Equality filters used to locate the document.
+     * @param array<string, mixed> $values Attributes written to the document.
+     */
+    public function updateOrCreate(array $attributes, array $values = []): Model
+    {
+        $instance = $this->firstOrNew($attributes);
+
+        if ($values !== []) {
+            $instance->fill($values);
+        }
+
+        $instance->save();
+
+        return $instance;
+    }
+
+    /**
+     * Assert that the query matches exactly one document and return it.
+     *
+     * @throws ModelNotFoundException When nothing matches.
+     * @throws MultipleRecordsFoundException When more than one document matches.
+     */
+    public function sole(): Model
+    {
+        $clone = clone $this;
+        $clone->size = 2;
+        $clone->from = 0;
+
+        $hits = $clone->get();
+
+        if ($hits->isEmpty()) {
+            throw ModelNotFoundException::forModel($this->model::class, null);
+        }
+
+        if ($hits->count() > 1) {
+            throw MultipleRecordsFoundException::forCount($hits->count());
+        }
+
+        $sole = $hits->first();
+
+        return $sole instanceof Model ? $sole : throw new SearchException('The query returned no usable document.');
+    }
+
     public function count(): int
     {
         $response = $this->connectionInstance()->request('count', [
@@ -920,6 +1004,87 @@ final class Builder implements QueryBuilderInterface
         $count = $response['count'] ?? 0;
 
         return is_int($count) ? $count : (int) $count;
+    }
+
+    /**
+     * Whether at least one document matches the query.
+     */
+    public function exists(): bool
+    {
+        return $this->count() > 0;
+    }
+
+    /**
+     * The average value of a field across the matching documents.
+     */
+    public function avg(string $field): int|float|null
+    {
+        return $this->metricValue('avg', $field);
+    }
+
+    /**
+     * The sum of a field across the matching documents.
+     */
+    public function sum(string $field): int|float|null
+    {
+        return $this->metricValue('sum', $field);
+    }
+
+    /**
+     * The minimum value of a field across the matching documents.
+     */
+    public function min(string $field): int|float|null
+    {
+        return $this->metricValue('min', $field);
+    }
+
+    /**
+     * The maximum value of a field across the matching documents.
+     */
+    public function max(string $field): int|float|null
+    {
+        return $this->metricValue('max', $field);
+    }
+
+    /**
+     * Delete every document matching the query via the `_delete_by_query` API.
+     *
+     * This performs a hard delete (like {@see Model::bulkDelete()}): soft delete
+     * models are NOT moved to the trash. The default scope still applies, so
+     * trashed documents are only matched when `withTrashed()` was used.
+     *
+     * @param array<string, mixed> $options Extra request options, e.g. `refresh`, `conflicts`, `slices`, `requests_per_second`, `max_docs`, `wait_for_completion`.
+     * @return int The number of deleted documents.
+     */
+    public function deleteByQuery(array $options = []): int
+    {
+        $params = array_merge($options, [
+            'index' => $this->getIndex(),
+            'body' => ['query' => $this->queryClause()],
+        ]);
+
+        $response = $this->connectionInstance()->request('deleteByQuery', $params);
+
+        $deleted = $response['deleted'] ?? 0;
+
+        return is_int($deleted) ? $deleted : (int) $deleted;
+    }
+
+    /**
+     * Execute a single value metric aggregation (`avg`, `sum`, `min`, `max`).
+     */
+    private function metricValue(string $type, string $field): int|float|null
+    {
+        $clone = clone $this;
+        $clone->aggregations = new AggregationBuilder();
+        $clone->aggregations->{$type}('metric', $field);
+        $clone->size = 0;
+        $clone->from = 0;
+
+        $aggregation = $clone->search()->aggregation('metric');
+        $value = is_array($aggregation) ? ($aggregation['value'] ?? null) : null;
+
+        return is_int($value) || is_float($value) ? $value : null;
     }
 
     public function each(callable $callback, int $chunkSize = 1000): bool

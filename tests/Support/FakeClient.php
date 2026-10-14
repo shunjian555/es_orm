@@ -166,6 +166,7 @@ final class FakeClient implements ClientInterface
             'get' => ['found' => false],
             'update' => ['result' => 'updated'],
             'delete' => ['result' => 'deleted'],
+            'deleteByQuery' => ['took' => 10, 'total' => 0, 'deleted' => 0],
             'bulk' => ['errors' => false, 'items' => []],
             'mget' => ['docs' => []],
             'msearch' => ['responses' => []],
@@ -222,6 +223,11 @@ final class FakeClient implements ClientInterface
     public function delete(array $params): array
     {
         return $this->arrayResponse('delete', $params);
+    }
+
+    public function deleteByQuery(array $params): array
+    {
+        return $this->arrayResponse('deleteByQuery', $params);
     }
 
     public function bulk(array $params): array
