@@ -1105,3 +1105,4 @@ without breaking existing code.
 ## License
 
 MIT — see [LICENSE](LICENSE).
+
