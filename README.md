@@ -1080,6 +1080,15 @@ Publish the config:
 php artisan vendor:publish --tag=es_orm-config
 ```
 
+```bash
+AppServiceProvider.php
+use EsOrm\Contracts\ConnectionManagerInterface;
+public function register(): void
+{    
+    $this->app->make(ConnectionManagerInterface::class);
+}
+```
+
 Models work unchanged inside a Laravel project.
 
 ## Docker & tooling
