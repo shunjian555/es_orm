@@ -1,0 +1,9 @@
+parameters:
+    level: 6
+    paths:
+        - src
+    treatPhpDocTypesAsCertain: false
+    ignoreErrors:
+        # `SoftDeletes` is part of the public API: it is applied by consumer
+        # models (outside this repository), so it is intentionally not used here.
+        - identifier: trait.unused

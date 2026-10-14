@@ -1,0 +1,72 @@
+{
+    "name": "php-es-orm/es-orm",
+    "description": "An Eloquent-style, type-safe, production-ready Elasticsearch ORM for PHP, with full Query DSL, Aggregations, Search After, PIT, Bulk, Alias and Reindex support.",
+    "type": "library",
+    "keywords": [
+        "elasticsearch",
+        "orm",
+        "eloquent",
+        "laravel",
+        "query-dsl",
+        "aggregation",
+        "search",
+        "es"
+    ],
+    "license": "MIT",
+    "require": {
+        "php": "^8.2",
+        "ext-json": "*",
+        "elasticsearch/elasticsearch": "^9.5",
+        "psr/log": "^1.1 || ^2.0 || ^3.0"
+    },
+    "require-dev": {
+        "friendsofphp/php-cs-fixer": "^3.60",
+        "guzzlehttp/guzzle": "^7.8",
+        "illuminate/console": "^10.0 || ^11.0 || ^12.0",
+        "illuminate/support": "^10.0 || ^11.0 || ^12.0",
+        "mockery/mockery": "^1.6",
+        "phpstan/phpstan": "^1.11 || ^2.0",
+        "phpunit/phpunit": "^10.5 || ^11.0",
+        "symfony/var-dumper": "^6.4 || ^7.0"
+    },
+    "suggest": {
+        "guzzlehttp/guzzle": "A PSR-18 HTTP client is required to talk to Elasticsearch (^7.8).",
+        "illuminate/support": "Required for the Laravel integration (^10|^11|^12).",
+        "illuminate/console": "Required for the Artisan commands (^10|^11|^12).",
+        "symfony/var-dumper": "Required for Query Builder dump()/dd() debugging."
+    },
+    "autoload": {
+        "psr-4": {
+            "EsOrm\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "EsOrm\\Tests\\": "tests/"
+        }
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "EsOrm\\Laravel\\EsOrmServiceProvider"
+            ],
+            "aliases": {
+                "Es": "EsOrm\\Laravel\\Facades\\Es"
+            }
+        }
+    },
+    "config": {
+        "sort-packages": true,
+        "allow-plugins": {
+            "php-http/discovery": true
+        }
+    },
+    "minimum-stability": "stable",
+    "prefer-stable": true,
+    "scripts": {
+        "test": "phpunit",
+        "analyse": "phpstan analyse --memory-limit=1G",
+        "cs": "php-cs-fixer fix --dry-run --diff",
+        "fix": "php-cs-fixer fix"
+    }
+}
