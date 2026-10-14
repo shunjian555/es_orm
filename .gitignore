@@ -11,3 +11,6 @@
 *.log
 .idea/
 .vscode/
+.vendor/
+.php-cs-fixer.cache
+.phpunit.cache/
