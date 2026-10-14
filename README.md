@@ -1032,7 +1032,7 @@ Es::search([...]);         // raw search
 Publish the config:
 
 ```bash
-php artisan vendor:publish --tag=es-orm-config
+php artisan vendor:publish --tag=es_orm-config
 ```
 
 Models work unchanged inside a Laravel project.

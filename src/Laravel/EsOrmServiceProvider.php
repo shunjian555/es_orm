@@ -61,7 +61,7 @@ final class EsOrmServiceProvider extends ServiceProvider
     {
         $this->publishes([
             dirname(__DIR__, 2) . '/config/es_orm.php' => (string) $this->app->configPath('es_orm.php'),
-        ], 'es-orm-config');
+        ], 'es_orm-config');
 
         if ($this->app->runningInConsole()) {
             $this->commands([
