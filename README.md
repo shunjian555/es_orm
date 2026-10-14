@@ -93,7 +93,7 @@ composer require guzzlehttp/guzzle
 The package ships with a configuration file you can copy into your project:
 
 ```bash
-cp vendor/php-es-orm/es-orm/config/es-orm.php config/es-orm.php
+cp vendor/php-es-orm/es-orm/config/es_orm.php config/es_orm.php
 ```
 
 ```php
@@ -179,12 +179,12 @@ Supported connection keys: `hosts`, `cloud_id`, `api_key` (+ optional
 
 ### Standalone PHP
 
-Models resolve a shared connection manager lazily from `config/es-orm.php`
+Models resolve a shared connection manager lazily from `config/es_orm.php`
 (relative to the current working directory) or from the file pointed at by the
 `ES_ORM_CONFIG` environment variable:
 
 ```bash
-export ES_ORM_CONFIG=/absolute/path/to/es-orm.php
+export ES_ORM_CONFIG=/absolute/path/to/es_orm.php
 ```
 
 You can also inject the manager explicitly (recommended in tests and in
@@ -195,7 +195,7 @@ use EsOrm\Client\ConnectionManager;
 use EsOrm\Model\Model;
 use EsOrm\Support\Config;
 
-Model::setConnectionManager(new ConnectionManager(Config::fromFile('config/es-orm.php')));
+Model::setConnectionManager(new ConnectionManager(Config::fromFile('config/es_orm.php')));
 
 // or from an array
 Model::setConnectionManager(ConnectionManager::fromArray([
@@ -298,7 +298,7 @@ $affected = User::bulkUpdate([
 
 $affected = User::bulkDelete([1, 2, 3]);
 
-$affected = User::destroy([1, 2, 3]); // alias of bulkDelete (soft-delete aware via query deletes)
+$affected = User::destroy([1, 2, 3]); // alias of bulkDelete
 ```
 
 The chunk size defaults to `bulk.chunk_size` (1000) and can be overridden per
@@ -546,8 +546,8 @@ Complex, nested aggregations:
 ```php
 $result = Article::query()
     ->aggregate('sales', function ($agg) {
-        $agg->dateHistogram('created_at', 'day');
-        $agg->avg('price', 'price'); // became a sub-aggregation of 'sales'
+        $agg->dateHistogram('per_day', 'created_at', 'day');
+        $agg->avg('avg_price', 'price'); // became a sub-aggregation of 'sales'
     })
     ->get();
 
@@ -1079,7 +1079,7 @@ Yes — every `bulkCreate()`/`bulkUpdate()`/`bulkDelete()` call issues Bulk API
 requests, one per chunk.
 
 **How do I change the default page size?**
-Set `pagination.default_size` in `config/es-orm.php`, or pass it to
+Set `pagination.default_size` in `config/es_orm.php`, or pass it to
 `paginate()`.
 
 **Is `rawQuery()` safe?**

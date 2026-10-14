@@ -10,7 +10,7 @@ use ArrayAccess;
  * Dot-notation aware configuration repository.
  *
  * The core package is framework agnostic: a Laravel application simply wraps
- * its `config('es-orm')` array into this object before handing it over.
+ * its `config('es_orm')` array into this object before handing it over.
  *
  * @implements ArrayAccess<string, mixed>
  */

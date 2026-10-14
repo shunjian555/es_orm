@@ -19,7 +19,7 @@ use Illuminate\Support\ServiceProvider;
  *
  * The provider is registered by Composer's package discovery; it binds the
  * connection manager, the {@see EsManager} (behind the `Es` facade) and the
- * Artisan commands, and publishes `config/es-orm.php`.
+ * Artisan commands, and publishes `config/es_orm.php`.
  *
  * The core package never depends on Laravel — this class is the only bridge.
  */
@@ -27,7 +27,7 @@ final class EsOrmServiceProvider extends ServiceProvider
 {
     public function register(): void
     {
-        $this->mergeConfigFrom(dirname(__DIR__, 2) . '/config/es-orm.php', 'es-orm');
+        $this->mergeConfigFrom(dirname(__DIR__, 2) . '/config/es_orm.php', 'es_orm');
 
         $this->app->singleton(ConnectionManagerInterface::class, function (): ConnectionManager {
             $manager = new ConnectionManager(Config::fromArray($this->esConfig()));
@@ -60,7 +60,7 @@ final class EsOrmServiceProvider extends ServiceProvider
     public function boot(): void
     {
         $this->publishes([
-            dirname(__DIR__, 2) . '/config/es-orm.php' => (string) $this->app->configPath('es-orm.php'),
+            dirname(__DIR__, 2) . '/config/es_orm.php' => (string) $this->app->configPath('es_orm.php'),
         ], 'es-orm-config');
 
         if ($this->app->runningInConsole()) {
@@ -81,7 +81,7 @@ final class EsOrmServiceProvider extends ServiceProvider
     {
         /** @var ConfigRepository $repository */
         $repository = $this->app->make('config');
-        $config = $repository->get('es-orm');
+        $config = $repository->get('es_orm');
 
         return is_array($config) ? $config : [];
     }

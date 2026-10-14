@@ -166,7 +166,7 @@ abstract class Model implements ModelInterface, ArrayAccess
      * The connection manager shared by every model.
      *
      * When none has been injected, it is lazily built from
-     * `config/es-orm.php` (or the file pointed at by `ES_ORM_CONFIG`).
+     * `config/es_orm.php` (or the file pointed at by `ES_ORM_CONFIG`).
      *
      * @throws ConnectionException When no configuration can be found.
      */
@@ -177,14 +177,14 @@ abstract class Model implements ModelInterface, ArrayAccess
         }
 
         $path = getenv('ES_ORM_CONFIG');
-        $path = is_string($path) && $path !== '' ? $path : getcwd() . DIRECTORY_SEPARATOR . 'config' . DIRECTORY_SEPARATOR . 'es-orm.php';
+        $path = is_string($path) && $path !== '' ? $path : getcwd() . DIRECTORY_SEPARATOR . 'config' . DIRECTORY_SEPARATOR . 'es_orm.php';
 
         if (is_file($path)) {
             return self::$connectionManager = new ConnectionManager(Config::fromFile($path));
         }
 
         throw new ConnectionException(
-            'No Elasticsearch connection manager has been configured. Call `' . static::class . '::setConnectionManager($manager)` or provide a `config/es-orm.php` file.',
+            'No Elasticsearch connection manager has been configured. Call `' . static::class . '::setConnectionManager($manager)` or provide a `config/es_orm.php` file.',
         );
     }
 
